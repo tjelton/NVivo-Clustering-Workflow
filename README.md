@@ -20,11 +20,15 @@ To do the clustering, we will be using NVivo. At the time of writing, staff at t
 
 ![New code](tutorial_images/New_code.png)
 
-5. Highlight ONE sentence that you want to include in that code. Drag it into the code on the left.
+5. Highlight the sentence(s) you want to include in that code and drag them into the code on the left. You can highlight a single sentence, or a block of consecutive sentences in one go. Because the text file is semantically sorted, similar responses often sit next to each other (e.g. a run of "no", "nothing" and "none" responses), so dragging them as one block is much faster than dragging them one at a time. When highlighting a block:
+
+   - Highlight whole lines. Start at the first character of the first sentence and finish after the closing bracket of the last sentence's key, e.g. `(110)`. Every line in the block must end with its key.
+   - Only include sentences that belong in that cluster. If a sentence in the middle of a run doesn't belong, end the block before it and start a new block after it.
+   - Don't include a sentence that is already in another code. Each sentence must be in exactly one code. The python script will stop and list any sentence that is in more than one code.
 
 ![Drag sentence](tutorial_images/Drag_sentence.png)
 
-6. One a sentence has been clustered, it will be highlighted yellow.
+Once a sentence has been clustered, it will be highlighted yellow.
 
 ![Highlighted sentence](tutorial_images/Highlighted_sentence.png)
 
@@ -49,4 +53,33 @@ To do the clustering, we will be using NVivo. At the time of writing, staff at t
 ![Codes folder](tutorial_images/Codes_folder.png)
 
 11. Now you are ready to run the python script to generate a csv file. To run the python script, enter `python3 generate_csv_NVivo_clustering.py "<text_file_uploaded_to_NVivo.txt>" --codes-dir "<directory_to_get_to_codes_from_step_9>" --csv-output "<file_name_for_produced_csv.csv>"`
+
+## How the script reads the NVivo export
+
+NVivo exports each code as a text file. Each time you drag a highlight into a code, NVivo records it as a *reference*, and each reference sits under a `Reference N - x% Coverage` header. A reference holds one line if you dragged a single sentence, or several lines if you dragged a block:
+
+```
+Reference 1 - 0.13% Coverage
+No specific confusion in this lecture. (23)
+Reference 2 - 0.54% Coverage
+no (96)
+no (97)
+No (98)
+...
+Nothing as such (110)
+```
+
+The script treats every line under a reference as its own sentence and uses the key in brackets to identify it, so the example above puts sentences 23 and 96 to 110 in the cluster. Codes made the original way (one sentence per reference) still work and give the same CSV as before.
+
+The CSV has one row per sentence in the sorted text file, with the columns `Code_Name` and `Quote`. The quote is always taken from the sorted text file rather than from the NVivo export, because NVivo changes straight apostrophes (') to curly ones (’). Any sentence that isn't in a code becomes its own cluster, named after its first 40 characters. If two of these sentences start with the same 40 characters, the key is added to the second name so they stay as separate clusters.
+
+Before writing the CSV, the script checks the codes. It stops without writing the CSV and lists the problems if:
+
+- a line in a code doesn't end with a key like `(N)`. This usually means the highlight stopped before the end of the last line in a block.
+- a sentence is in more than one code. This usually means a block overlapped a sentence that was already coded.
+- a key in a code isn't in the sorted text file. This usually means the wrong sorted text file or codes folder was passed to the script.
+
+Fix these in NVivo, export the codes again (steps 7 to 9) and re-run the script.
+
+The script also prints a warning, but still writes the CSV, if a coded line is only part of a sentence (e.g. the highlight started partway through the first line of a block). The full sentence from the sorted text file is used in the CSV, but it is worth checking the highlight in NVivo.
 
